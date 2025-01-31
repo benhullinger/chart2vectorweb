@@ -1,3 +1,9 @@
+const lastFiles = {
+    tick: null,
+    path: null,
+    combined: null
+};
+
 function generateSVG(tickPositions, width, height) {
     const svg = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
         ${tickPositions.map(([x, y]) => `
@@ -109,6 +115,8 @@ function cleanupPreviousUpload(previewId, resultsId) {
 }
 
 function processImage(imageFile) {
+    lastFiles.tick = imageFile;
+    document.getElementById('tickRegenerate').disabled = false;
     const dropZone = document.getElementById('dropZone');
     dropZone.setAttribute('data-original-content', dropZone.innerHTML);
     setLoading(dropZone, true);
@@ -160,6 +168,8 @@ function processImage(imageFile) {
 }
 
 function processPathImage(imageFile) {
+    lastFiles.path = imageFile;
+    document.getElementById('pathRegenerate').disabled = false;
     const dropZone = document.getElementById('pathDropZone');
     dropZone.setAttribute('data-original-content', dropZone.innerHTML);
     setLoading(dropZone, true);
@@ -280,6 +290,8 @@ function findNearestTick(point, tickPositions, maxDistance = 30) {
 }
 
 function traceRightwardPath(imageFile) {
+    lastFiles.combined = imageFile;
+    document.getElementById('combinedRegenerate').disabled = false;
     const dropZone = document.getElementById('combinedDropZone');
     cleanupPreviousUpload('combinedPreview', 'combinedResults');
     dropZone.setAttribute('data-original-content', dropZone.innerHTML);
@@ -412,23 +424,22 @@ function traceRightwardPath(imageFile) {
     img.src = URL.createObjectURL(imageFile);
 }
 
-// Add event listeners for threshold changes to trigger reprocessing
-['tickThreshold', 'pathThreshold', 'combinedThreshold'].forEach(id => {
-    document.getElementById(id).addEventListener('change', (e) => {
-        const fileInput = document.getElementById(id.replace('Threshold', 'FileInput'));
-        const file = fileInput.files[0];
-        if (file) {
-            if (id === 'tickThreshold') processImage(file);
-            else if (id === 'pathThreshold') processPathImage(file);
-            else traceRightwardPath(file);
-        }
-    });
+// Add event listeners for regenerate buttons
+document.getElementById('tickRegenerate').addEventListener('click', () => {
+    if (lastFiles.tick) processImage(lastFiles.tick);
 });
 
-// Update the combined processor to use the new tracer
-document.getElementById('combinedFileInput').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) traceRightwardPath(file);
+document.getElementById('pathRegenerate').addEventListener('click', () => {
+    if (lastFiles.path) processPathImage(lastFiles.path);
+});
+
+document.getElementById('combinedRegenerate').addEventListener('click', () => {
+    if (lastFiles.combined) traceRightwardPath(lastFiles.combined);
+});
+
+// Remove the threshold change listeners since we now have regenerate buttons
+['tickThreshold', 'pathThreshold', 'combinedThreshold'].forEach(id => {
+    document.getElementById(id).removeEventListener('change', () => {});
 });
 
 // Define a single setupDropZone function
