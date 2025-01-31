@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chart Vector Extractor</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        .header {
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1800px;  /* increased to fit three columns */
+            margin: 0 auto;
+        }
+
+        .drop-area {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .dropZone {
+            position: relative;
+            width: 100%;
+            min-height: 200px;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .dropZone.drag-over {
+            background: #e3f2fd;
+            border-color: #3498db;
+        }
+
+        .dropZone.processing {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .preview-container {
+            display: none;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            margin-top: 15px;
+            padding: 10px;
+        }
+
+        .preview-container.has-content {
+            display: block;
+        }
+
+        .preview {
+            width: 100%;
+        }
+
+        .preview svg {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .button {
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            opacity: 0.9;
+        }
+
+        .results {
+            display: none;
+            padding: 10px;
+            border-radius: 5px;
+            background: #f5f5f5;
+        }
+
+        .results.has-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .download-button {
+            background: #27ae60;
+        }
+
+        .download-button:hover {
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .control-group label {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .control-group input {
+            width: 60px;
+            padding: 4px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Chart Vector Extractor</h1>
+    </div>
+
+    <div class="container">
+        <div class="drop-area">
+            <h3>Tick Mark Detection</h3>
+            <div id="dropZone" class="dropZone">
+                <span>Drop your tick marks image here</span>
+                <small>or</small>
+                <button class="button" onclick="document.getElementById('tickFileInput').click()">
+                    Choose File
+                </button>
+                <input type="file" id="tickFileInput" class="file-input" accept="image/*">
+            </div>
+            <div class="controls">
+                <div class="control-group">
+                    <label>Min tick height (px)</label>
+                    <input type="number" id="tickMinHeight" value="6" min="1" max="20">
+                </div>
+                <div class="control-group">
+                    <label>Max tick height (px)</label>
+                    <input type="number" id="tickMaxHeight" value="7" min="1" max="20">
+                </div>
+            </div>
+            <canvas id="canvas"></canvas>
+            <div class="preview-container">
+                <div id="preview" class="preview"></div>
+            </div>
+            <div id="results" class="results"></div>
+        </div>
+        
+        <div class="drop-area">
+            <h3>Path Tracing</h3>
+            <div id="pathDropZone" class="dropZone">
+                <span>Drop your path image here</span>
+                <small>or</small>
+                <button class="button" onclick="document.getElementById('pathFileInput').click()">
+                    Choose File
+                </button>
+                <input type="file" id="pathFileInput" class="file-input" accept="image/*">
+            </div>
+            <canvas id="pathCanvas"></canvas>
+            <div class="preview-container">
+                <div id="pathPreview" class="preview"></div>
+            </div>
+            <div id="pathResults" class="results"></div>
+        </div>
+
+        <div class="drop-area">
+            <h3>Combined Path & Ticks</h3>
+
+            <div id="combinedDropZone" class="dropZone">
+                <span>Drop your image here (with ticks and curve)</span>
+                <small>or</small>
+                <button class="button" onclick="document.getElementById('combinedFileInput').click()">
+                    Choose File
+                </button>
+                <input type="file" id="combinedFileInput" class="file-input" accept="image/*">
+            </div>
+            <div class="controls">
+                <div class="control-group">
+                    <label>Min tick height (px)</label>
+                    <input type="number" id="combinedMinHeight" value="6" min="1" max="20">
+                </div>
+                <div class="control-group">
+                    <label>Max tick height (px)</label>
+                    <input type="number" id="combinedMaxHeight" value="7" min="1" max="20">
+                </div>
+            </div>
+            <canvas id="combinedCanvas"></canvas>
+            <div class="preview-container">
+                <div id="combinedPreview" class="preview"></div>
+            </div>
+            <div id="combinedResults" class="results"></div>
+        </div>
+    </div>
+    <script src="processor.js"></script>
+</body>
+</html>
