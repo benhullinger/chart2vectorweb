@@ -246,13 +246,13 @@ function downloadSVG(content, filename) {
 
 // New combined processor functions
 
-function findTickMarks(data, width, height, minHeight, maxHeight) {
+function findTickMarks(data, width, height, minHeight, maxHeight, threshold) {
     const tickPositions = [];
     for (let x = 0; x < width; x++) {
         let blackStreak = 0;
         for (let y = 0; y < height; y++) {
             const idx = (y * width + x) * 4;
-            if (data[idx] < 127) {
+            if (data[idx] < threshold) {
                 blackStreak++;
             } else if (blackStreak > 0) {
                 if (blackStreak >= minHeight && blackStreak <= maxHeight) {
@@ -302,7 +302,7 @@ function traceRightwardPath(imageFile) {
             const threshold = parseInt(document.getElementById('combinedThreshold').value);
 
             // First detect ticks without modifying the image
-            const tickPositions = findTickMarks(data, canvas.width, canvas.height, minHeight, maxHeight);
+            const tickPositions = findTickMarks(data, canvas.width, canvas.height, minHeight, maxHeight, threshold);
             console.log(`Found ${tickPositions.length} tick marks`);
 
             // Convert to binary for path tracing
@@ -411,6 +411,19 @@ function traceRightwardPath(imageFile) {
 
     img.src = URL.createObjectURL(imageFile);
 }
+
+// Add event listeners for threshold changes to trigger reprocessing
+['tickThreshold', 'pathThreshold', 'combinedThreshold'].forEach(id => {
+    document.getElementById(id).addEventListener('change', (e) => {
+        const fileInput = document.getElementById(id.replace('Threshold', 'FileInput'));
+        const file = fileInput.files[0];
+        if (file) {
+            if (id === 'tickThreshold') processImage(file);
+            else if (id === 'pathThreshold') processPathImage(file);
+            else traceRightwardPath(file);
+        }
+    });
+});
 
 // Update the combined processor to use the new tracer
 document.getElementById('combinedFileInput').addEventListener('change', (e) => {
