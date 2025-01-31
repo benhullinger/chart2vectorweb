@@ -126,15 +126,15 @@ function processImage(imageFile) {
         
         const minHeight = parseInt(document.getElementById('tickMinHeight').value);
         const maxHeight = parseInt(document.getElementById('tickMaxHeight').value);
+        const threshold = parseInt(document.getElementById('tickThreshold').value);
         
-        // Find tick marks (revert to original behavior)
+        // Find tick marks with threshold
         const tickPositions = [];
         for (let x = 0; x < canvas.width; x++) {
             let blackStreak = 0;
             for (let y = 0; y < canvas.height; y++) {
                 const idx = (y * canvas.width + x) * 4;
-                const isBlack = data[idx] < 127;
-                
+                const isBlack = data[idx] < threshold;
                 if (isBlack) {
                     blackStreak++;
                 } else if (blackStreak > 0) {
@@ -175,12 +175,14 @@ function processPathImage(imageFile) {
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
         
-        // Convert to binary (black/white)
+        const threshold = parseInt(document.getElementById('pathThreshold').value);
+        
+        // Convert to binary using threshold
         const binary = new Array(canvas.height).fill().map(() => new Array(canvas.width).fill(0));
         for (let y = 0; y < canvas.height; y++) {
             for (let x = 0; x < canvas.width; x++) {
                 const idx = (y * canvas.width + x) * 4;
-                binary[y][x] = data[idx] < 127 ? 1 : 0;
+                binary[y][x] = data[idx] < threshold ? 1 : 0;
             }
         }
         
@@ -297,6 +299,7 @@ function traceRightwardPath(imageFile) {
 
             const minHeight = parseInt(document.getElementById('combinedMinHeight').value);
             const maxHeight = parseInt(document.getElementById('combinedMaxHeight').value);
+            const threshold = parseInt(document.getElementById('combinedThreshold').value);
 
             // First detect ticks without modifying the image
             const tickPositions = findTickMarks(data, canvas.width, canvas.height, minHeight, maxHeight);
@@ -307,7 +310,7 @@ function traceRightwardPath(imageFile) {
             for (let y = 0; y < canvas.height; y++) {
                 for (let x = 0; x < canvas.width; x++) {
                     const idx = (y * canvas.width + x) * 4;
-                    binary[y][x] = data[idx] < 127 ? 1 : 0; // Use original threshold
+                    binary[y][x] = data[idx] < threshold ? 1 : 0; // Use original threshold
                 }
             }
 
