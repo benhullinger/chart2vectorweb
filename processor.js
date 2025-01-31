@@ -112,9 +112,21 @@ function cleanupPreviousUpload(previewId, resultsId) {
     // Clear results
     results.innerHTML = '';
     results.classList.remove('has-content');
+
+    // Only disable regenerate buttons if we're not about to process a new file
+    if (!lastFiles.tick && !lastFiles.path && !lastFiles.combined) {
+        if (previewId === 'preview') {
+            document.getElementById('tickRegenerate').disabled = true;
+        } else if (previewId === 'pathPreview') {
+            document.getElementById('pathRegenerate').disabled = true;
+        } else if (previewId === 'combinedPreview') {
+            document.getElementById('combinedRegenerate').disabled = true;
+        }
+    }
 }
 
 function processImage(imageFile) {
+    // Store file and enable regenerate button first
     lastFiles.tick = imageFile;
     document.getElementById('tickRegenerate').disabled = false;
     const dropZone = document.getElementById('dropZone');
@@ -168,6 +180,7 @@ function processImage(imageFile) {
 }
 
 function processPathImage(imageFile) {
+    // Store file and enable regenerate button first
     lastFiles.path = imageFile;
     document.getElementById('pathRegenerate').disabled = false;
     const dropZone = document.getElementById('pathDropZone');
@@ -290,6 +303,7 @@ function findNearestTick(point, tickPositions, maxDistance = 30) {
 }
 
 function traceRightwardPath(imageFile) {
+    // Store file and enable regenerate button first
     lastFiles.combined = imageFile;
     document.getElementById('combinedRegenerate').disabled = false;
     const dropZone = document.getElementById('combinedDropZone');
