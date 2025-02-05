@@ -4,5 +4,5 @@
 # But not these files
 !.gitignore
 !index.html
-!processor.js
+!pathColumnScanner.js
 !README.md
