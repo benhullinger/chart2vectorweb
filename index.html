@@ -1,7 +1,5 @@
-<!DOCTYPE html>
-<html>
 <head>
-    <title>Chart Vector Extractor</title>
+    <title>Path Column Scanner Test</title>
     <style>
         body {
             margin: 0;
@@ -19,30 +17,43 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 30px;
-            max-width: 1800px;  /* increased to fit three columns */
             margin: 0 auto;
         }
 
-        .drop-area {
+        .input-area, .output-area {
             display: flex;
             flex-direction: column;
             gap: 15px;
         }
 
         .dropZone {
-            position: relative;
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            min-height: 200px;
-            border: 2px dashed #ccc;
-            border-radius: 10px;
+            height: 100%;
+            z-index: 10;
+            /* background: #f8f9fa; */
+            opacity: 1;
+            transition: opacity 0.3s;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: 10px;
+            border: 2px dashed #ccc;
+            box-sizing: border-box;
+            border-radius: 10px;
+        }
+
+        .dropZone.has-content {
+            opacity: 0;
+            pointer-events: none;
         }
 
         .dropZone.drag-over {
+            opacity: 0.9;
+            pointer-events: all;
             background: #e3f2fd;
             border-color: #3498db;
         }
@@ -52,13 +63,14 @@
             pointer-events: none;
         }
 
-        .preview-container {
+        /* .preview-container {
             display: none;
             border: 1px solid #ccc;
             border-radius: 10px;
             margin-top: 15px;
-            padding: 10px;
-        }
+            position: relative;
+            z-index: 1;
+        } */
 
         .preview-container.has-content {
             display: block;
@@ -102,6 +114,7 @@
             padding: 10px;
             border-radius: 5px;
             background: #f5f5f5;
+            margin-top: 15px;
         }
 
         .results.has-content {
@@ -127,134 +140,183 @@
 
         .controls {
             display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 20px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
         }
-        
+
+        .control-section {
+            flex: 1 1 200px;  /* grow, shrink, basis */
+            min-width: 0;     /* allows flexbox to shrink items below basis */
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .control-section h4 {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
         .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
+            margin-bottom: 12px;
         }
-        
+
         .control-group label {
             font-size: 0.9em;
             color: #666;
+            margin-bottom: 4px;
+            display: block;
         }
-        
-        .control-group input {
-            width: 60px;
-            padding: 4px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+
+        .preview-container {
+            position: relative;
+            z-index: 1;
+        }
+
+        #originalImage {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .control-section:last-child {
+            flex-basis: 100%;
+        }
+
+        .compare-container {
+            position: relative;
+            min-height: 200px;
+            /* border: 1px solid #ccc; */
+            /* border-radius: 10px; */
+            overflow: hidden;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
         }
     </style>
 </head>
+
 <body>
     <div class="header">
-        <h1>Chart Vector Extractor</h1>
+        <h1>Chart Vectorizer</h1>
     </div>
 
     <div class="container">
-        <div class="drop-area">
-            <h3>Tick Mark Detection</h3>
-            <div id="dropZone" class="dropZone">
-                <span>Drop your tick marks image here</span>
-                <small>or</small>
-                <button class="button" onclick="document.getElementById('tickFileInput').click()">
-                    Choose File
-                </button>
-                <input type="file" id="tickFileInput" class="file-input" accept="image/*">
-            </div>
+        <div class="input-area">
+            <input type="file" id="fileInput" class="file-input" accept="image/*">
             <div class="controls">
-                <div class="control-group">
-                    <label>Min tick height (px)</label>
-                    <input type="number" id="tickMinHeight" value="6" min="1" max="20">
+                <div class="control-section">
+                    <h4>Resolution</h4>
+                    <div class="control-group">
+                        <label>X-Axis Resolution</label>
+                        <input type="range" id="xResolution" value="12" min="1" max="100" step="1">
+                        <span id="xResolutionValue">12 units</span>
+                    </div>
+                    <div class="control-group">
+                        <label>Y-Axis Resolution</label>
+                        <input type="range" id="yResolution" value="100" min="1" max="100" step="1">
+                        <span id="yResolutionValue">100 units</span>
+                    </div>
                 </div>
-                <div class="control-group">
-                    <label>Max tick height (px)</label>
-                    <input type="number" id="tickMaxHeight" value="7" min="1" max="20">
+
+                <div class="control-section">
+                    <h4>Path Settings</h4>
+                    <div class="control-group">
+                        <label>Max Paths</label>
+                        <input type="range" id="maxPaths" value="2" min="1" max="200" step="1">
+                        <span id="maxPathsValue">2 paths</span>
+                    </div>
+                    <div class="control-group">
+                        <label>Min Path Length</label>
+                        <input type="range" id="minPathLength" value="5" min="3" max="50" step="1">
+                        <span id="minPathLengthValue">5 units</span>
+                    </div>
+                    <div class="control-group">
+                        <label>Max Gap</label>
+                        <input type="range" id="maxGap" value="3" min="1" max="20" step="1">
+                        <span id="maxGapValue">3 units</span>
+                    </div>
                 </div>
-                <div class="control-group">
-                    <label>Threshold (0-255)</label>
-                    <input type="number" id="tickThreshold" value="127" min="0" max="255">
+
+                <div class="control-section">
+                    <h4>Tick Mark Settings</h4>
+                    <div class="control-group">
+                        <label>Width</label>
+                        <input type="range" id="tickWidth" value="1" min="1" max="10" step="1">
+                        <span id="tickWidthValue">1 px</span>
+                    </div>
+                    <div class="control-group">
+                        <label>Min Height</label>
+                        <input type="range" id="minTickHeight" value="6" min="1" max="20" step="1">
+                        <span id="minTickHeightValue">6 px</span>
+                    </div>
+                    <div class="control-group">
+                        <label>Max Height</label>
+                        <input type="range" id="maxTickHeight" value="7" min="1" max="20" step="1">
+                        <span id="maxTickHeightValue">7 px</span>
+                    </div>
                 </div>
-                <div class="control-group">
-                    <label>&nbsp;</label>
-                    <button class="button" id="tickRegenerate" disabled>Regenerate</button>
+
+                <div class="control-section">
+                    <h4>Image Processing</h4>
+                    <div class="control-group">
+                        <label>Threshold</label>
+                        <input type="range" id="threshold" value="127" min="0" max="255" step="1">
+                        <span id="thresholdValue">127</span>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <div class="control-group">
+                        <label>
+                            <input type="checkbox" id="showOriginal">
+                            Show Original Image
+                        </label>
+                    </div>
+                    <div class="control-group">
+                        <label>Overlay Opacity</label>
+                        <input type="range" id="opacity" value="50" min="0" max="100" step="1">
+                        <span id="opacityValue">50%</span>
+                    </div>
                 </div>
             </div>
-            <canvas id="canvas"></canvas>
-            <div class="preview-container">
-                <div id="preview" class="preview"></div>
+        </div>
+        <div class="output-area">
+            <div class="compare-container">
+                <div id="dropZone" class="dropZone">
+                    <span>Drop your image here</span>
+                    <small>or</small>
+                    <button class="button" onclick="document.getElementById('fileInput').click()">
+                        Choose File
+                    </button>
+                </div>
+                <canvas id="processingCanvas" style="display: none;"></canvas>
+                <div class="preview-container">
+                    <img id="originalImage" style="display: block;">
+                    <div id="preview" class="preview"></div>
+                </div>
             </div>
             <div id="results" class="results"></div>
         </div>
-        
-        <div class="drop-area">
-            <h3>Path Tracing</h3>
-            <div id="pathDropZone" class="dropZone">
-                <span>Drop your path image here</span>
-                <small>or</small>
-                <button class="button" onclick="document.getElementById('pathFileInput').click()">
-                    Choose File
-                </button>
-                <input type="file" id="pathFileInput" class="file-input" accept="image/*">
-            </div>
-            <div class="controls">
-                <div class="control-group">
-                    <label>Threshold (0-255)</label>
-                    <input type="number" id="pathThreshold" value="127" min="0" max="255">
-                </div>
-                <div class="control-group">
-                    <label>&nbsp;</label>
-                    <button class="button" id="pathRegenerate" disabled>Regenerate</button>
-                </div>
-            </div>
-            <canvas id="pathCanvas"></canvas>
-            <div class="preview-container">
-                <div id="pathPreview" class="preview"></div>
-            </div>
-            <div id="pathResults" class="results"></div>
-        </div>
-
-        <div class="drop-area">
-            <h3>Combined Path & Ticks</h3>
-
-            <div id="combinedDropZone" class="dropZone">
-                <span>Drop your image here (with ticks and curve)</span>
-                <small>or</small>
-                <button class="button" onclick="document.getElementById('combinedFileInput').click()">
-                    Choose File
-                </button>
-                <input type="file" id="combinedFileInput" class="file-input" accept="image/*">
-            </div>
-            <div class="controls">
-                <div class="control-group">
-                    <label>Min tick height (px)</label>
-                    <input type="number" id="combinedMinHeight" value="6" min="1" max="20">
-                </div>
-                <div class="control-group">
-                    <label>Max tick height (px)</label>
-                    <input type="number" id="combinedMaxHeight" value="7" min="1" max="20">
-                </div>
-                <div class="control-group">
-                    <label>Threshold (0-255)</label>
-                    <input type="number" id="combinedThreshold" value="127" min="0" max="255">
-                </div>
-                <div class="control-group">
-                    <label>&nbsp;</label>
-                    <button class="button" id="combinedRegenerate" disabled>Regenerate</button>
-                </div>
-            </div>
-            <canvas id="combinedCanvas"></canvas>
-            <div class="preview-container">
-                <div id="combinedPreview" class="preview"></div>
-            </div>
-            <div id="combinedResults" class="results"></div>
-        </div>
     </div>
-    <script src="processor.js"></script>
+    <script src="pathColumnScanner.js"></script>
 </body>
+
 </html>
