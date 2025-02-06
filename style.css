@@ -7,11 +7,6 @@ body {
 }
 
 /* Container layouts */
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
 .compare-container {
     position: relative;
     margin: 20px 0;
