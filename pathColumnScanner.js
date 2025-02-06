@@ -367,7 +367,7 @@ function findPathCenters(imageFile, options) {
                     ${processedPaths.map(path => 
                         `<path d="M ${path[0][0]} ${path[0][1]} 
                                 ${path.slice(1).map(([x, y]) => `L ${x} ${y}`).join(' ')}"
-                              stroke="black" stroke-width="1" fill="none"/>`
+                              stroke="red" stroke-width="1" fill="none"/>`
                     ).join('\n')}
                     ${adjustedTicks.map(([x, y]) => 
                         `<path d="M ${x} ${y-medianTickHeight} L ${x} ${y+medianTickHeight} M ${x-5} ${y} L ${x+5} ${y}"
