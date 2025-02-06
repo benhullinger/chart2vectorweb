@@ -1,5 +1,10 @@
+<!DOCTYPE html>
+<html>
 <head>
-    <title>Path Column Scanner Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart to Vector</title>
+    <link rel="stylesheet" href="style.css">
     <style>
         body {
             margin: 0;
@@ -222,21 +227,21 @@
         <div class="input-area">
             <input type="file" id="fileInput" class="file-input" accept="image/*">
             <div class="controls">
-                <div class="control-section">
+                <div class="control-section" data-section="resolution">
                     <h4>Resolution</h4>
                     <div class="control-group">
                         <label>X-Axis Resolution</label>
-                        <input type="range" id="xResolution" value="12" min="1" max="100" step="1">
-                        <span id="xResolutionValue">12 units</span>
+                        <input type="range" id="xResolution" value="100" min="1" max="100" step="1">
+                        <span id="xResolutionValue">1.0px/unit</span>
                     </div>
                     <div class="control-group">
                         <label>Y-Axis Resolution</label>
                         <input type="range" id="yResolution" value="100" min="1" max="100" step="1">
-                        <span id="yResolutionValue">100 units</span>
+                        <span id="yResolutionValue">1.0px/unit</span>
                     </div>
                 </div>
 
-                <div class="control-section">
+                <div class="control-section" data-section="paths">
                     <h4>Path Settings</h4>
                     <div class="control-group">
                         <label>Max Paths</label>
@@ -255,7 +260,7 @@
                     </div>
                 </div>
 
-                <div class="control-section">
+                <div class="control-section" data-section="ticks">
                     <h4>Tick Mark Settings</h4>
                     <div class="control-group">
                         <label>Width</label>
@@ -274,7 +279,7 @@
                     </div>
                 </div>
 
-                <div class="control-section">
+                <div class="control-section" data-section="processing">
                     <h4>Image Processing</h4>
                     <div class="control-group">
                         <label>Threshold</label>

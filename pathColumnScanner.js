@@ -1,5 +1,7 @@
 let lastFile = null;
-let isFirstLoad = true;  // Add this flag at the top
+let isFirstLoad = true;
+let xValue = 100;  // Initial max value
+let yValue = 100;  // Initial max value
 
 function processImage(file) {
     lastFile = file;
@@ -22,31 +24,30 @@ function processImage(file) {
             return;
         }
 
-        // Update resolution values only on first load
-        if (isFirstLoad) {
-            xResolution.value = Math.round(img.width);
-            yResolution.value = Math.round(img.height);
-            xValue = Math.round(img.width);
-            yValue = Math.round(img.height);
-            isFirstLoad = false;
-        } else {
-            xValue = parseInt(xResolution.value);
-            yValue = parseInt(yResolution.value);
-        }
-
-        // Set maximum values
+        // Set maximum values to image dimensions
         xResolution.max = img.width;
         yResolution.max = img.height;
 
-        // Update displays with null checks
+        // On first load, set resolution to maintain 1px/unit
+        if (isFirstLoad) {
+            xValue = img.width;  // One unit per pixel
+            yValue = img.height; // One unit per pixel
+            xResolution.value = xValue;
+            yResolution.value = yValue;
+            isFirstLoad = false;
+        }
+
+        // Update displays with unit counts and correct ratio
         const xDisplay = document.getElementById('xResolutionValue');
         const yDisplay = document.getElementById('yResolutionValue');
         
         if (xDisplay) {
-            xDisplay.textContent = `${xValue} units (${(img.width / xValue).toFixed(1)}px/unit)`;
+            const xRatio = (img.width / xValue).toFixed(1);
+            xDisplay.textContent = `${xRatio}px/unit (${xValue} units)`;
         }
         if (yDisplay) {
-            yDisplay.textContent = `${yValue} units (${(img.height / yValue).toFixed(1)}px/unit)`;
+            const yRatio = (img.height / yValue).toFixed(1);
+            yDisplay.textContent = `${yRatio}px/unit (${yValue} units)`;
         }
 
         const options = {
@@ -419,23 +420,38 @@ function downloadSVG(content, filename) {
 let sliderTimeout;
 ['xResolution', 'yResolution', 'maxPaths', 'minPathLength', 'maxGap'].forEach(id => {
     const slider = document.getElementById(id);
+    if (!slider) return;
+
+    // Set initial slider values to maximum for resolution sliders only
+    if (id === 'xResolution' || id === 'yResolution') {
+        slider.value = slider.max;
+    }
+    
     slider.addEventListener('input', (e) => {
-        const value = e.target.value;
-        let displayText = value;
+        const value = parseInt(e.target.value);
+        const display = document.getElementById(`${id}Value`);
         
         if (id === 'xResolution' || id === 'yResolution') {
             const dimension = id === 'xResolution' ? 'width' : 'height';
             const processingCanvas = document.getElementById('processingCanvas');
-            displayText = processingCanvas ? 
-                `${value} units (${(processingCanvas[dimension] / value).toFixed(1)}px/unit)` : 
-                `${value} units`;
-        } else if (id === 'maxPaths') {
-            displayText = `${value} paths`;
-        } else if (id === 'minPathLength' || id === 'maxGap') {
-            displayText = `${value} units`;
+            
+            if (id === 'xResolution') xValue = value;
+            else yValue = value;
+            
+            if (display && processingCanvas) {
+                const pxPerUnit = (processingCanvas[dimension] / value);
+                display.textContent = `${pxPerUnit.toFixed(1)}px/unit (${value} units)`;
+            }
+        } else {
+            // Handle non-resolution sliders
+            if (display) {
+                if (id === 'maxPaths') {
+                    display.textContent = `${value} paths`;
+                } else {
+                    display.textContent = `${value} units`;
+                }
+            }
         }
-        
-        document.getElementById(`${id}Value`).textContent = displayText;
         
         clearTimeout(sliderTimeout);
         sliderTimeout = setTimeout(() => {
@@ -443,6 +459,44 @@ let sliderTimeout;
         }, 300);
     });
 });
+
+// Add tooltips to control groups
+const tooltips = {
+    resolution: "Controls how many units the image will be divided into. Higher values mean more detail but slower processing.",
+    paths: `Path Detection Settings:
+<ul>
+<li>Max Paths: Maximum number of separate lines to detect. Start with a low number and increase if you have multiple lines.</li>
+<li>Min Path Length: How many points a path needs to be considered valid. Increase to filter out noise and small marks.</li>
+<li>Max Gap: How far to look ahead when connecting points. Larger values help bridge gaps in dotted or broken lines.</li>
+</ul>`,
+    threshold: "Brightness threshold for detecting black pixels. Adjust if the lines are not being detected properly.",
+    ticks: "Controls for detecting tick marks along the paths. Adjust width and height to match your tick marks."
+};
+
+function addTooltip(sectionId, text) {
+    const section = document.querySelector(`[data-section="${sectionId}"]`);
+    if (!section) return;
+
+    const header = section.querySelector('h4');
+    if (!header) return;
+
+    const infoIcon = document.createElement('span');
+    infoIcon.className = 'info-icon';
+    infoIcon.textContent = 'i';
+    
+    const tooltip = document.createElement('span');
+    tooltip.className = 'tooltip';
+    tooltip.innerHTML = text; // Changed from textContent to innerHTML to support list formatting
+    
+    infoIcon.appendChild(tooltip);
+    header.appendChild(infoIcon);
+}
+
+// Update tooltip initialization
+addTooltip('resolution', tooltips.resolution);
+addTooltip('paths', tooltips.paths);
+addTooltip('ticks', tooltips.ticks);
+addTooltip('processing', tooltips.threshold);
 
 // Drop zone handling
 const dropZone = document.getElementById('dropZone');
@@ -496,7 +550,7 @@ document.getElementById('opacity').addEventListener('input', (e) => {
         const valueDisplay = document.getElementById(`${id}Value`);
         element.addEventListener('input', (e) => {
             if (valueDisplay) {
-                valueDisplay.textContent = id.includes('tick') ? `${e.target.value} px` : e.target.value;
+                valueDisplay.textContent = id.toLowerCase().includes('tick') ? `${e.target.value} px` : e.target.value;
             }
             if (lastFile) {
                 clearTimeout(sliderTimeout);
