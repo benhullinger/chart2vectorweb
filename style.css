@@ -47,7 +47,7 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 6px;
 }
 
@@ -144,6 +144,7 @@ body {
     cursor: help;
     position: relative;
     margin-left: 6px;
+    margin-top: 1px;
     font-weight: bold;
     font-style: normal;
     text-transform: lowercase;
