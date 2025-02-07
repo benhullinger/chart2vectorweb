@@ -71,6 +71,7 @@ function processImage(file) {
                 const preview = document.getElementById('preview');
                 preview.innerHTML = svg;
                 preview.parentElement.classList.add('has-content');
+                preview.parentElement.parentElement.classList.add('has-content'); // Add this line
                 
                 const results = document.getElementById('results');
                 results.classList.add('has-content');
