@@ -167,7 +167,6 @@ body {
 .button-group {
     display: flex;
     gap: 10px;
-    margin-top: 15px;
 }
 
 .button {
